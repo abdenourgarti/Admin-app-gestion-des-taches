@@ -36,20 +36,18 @@ const ComptesTable = ({ comptes, onDeleteCompte }) => {
       <table className="w-full table-auto">
         <thead>
           <tr>
-            <th className="bg-gray-200 border border-gray-400 px-4 py-2">ID</th>
             <th className="bg-gray-200 border border-gray-400 px-4 py-2">Nom et prénom</th>
-            <th className="bg-gray-200 border border-gray-400 px-4 py-2">Rôle</th>
+            <th className="bg-gray-200 border border-gray-400 px-4 py-2">Email</th>
             <th className="bg-gray-200 border border-gray-400 px-4 py-2 w-64">Actions</th>
           </tr>
         </thead>
         <tbody>
           {comptes.map((compte) => (
             <tr key={compte.id}>
-              <td className="border border-gray-400 px-4 py-2">{compte.id}</td>
               <td className="border border-gray-400 px-4 py-2">
                 {compte.nom} {compte.prenom}
               </td>
-              <td className="border border-gray-400 px-4 py-2">{compte.role}</td>
+              <td className="border border-gray-400 px-4 py-2">{compte.email}</td>
               <td className="border border-gray-400 px-4 py-2">
                 <div className="flex flex-col md:flex-row justify-center items-center md:items-start">
                   <button

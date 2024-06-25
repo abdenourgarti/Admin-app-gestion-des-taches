@@ -40,7 +40,7 @@ const AdminAccountPage = () => {
     <div className="flex flex-col min-h-screen bg-white">
         <Navigation activeTab="" />
       <div className="flex-grow flex items-center justify-center">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-2xl">
           <div className="bg-gray-100 shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <div className="flex justify-center mb-6">
               <h1 className="text-2xl font-bold">Compte Administrateur</h1>

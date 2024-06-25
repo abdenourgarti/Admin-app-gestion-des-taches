@@ -6,19 +6,34 @@ import CompteTable from "@/components/Tables/CompteTable/index"
 import { auth} from '../Firebase/firebaseConfig'
 import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
+import axios from "axios";
  
 
-// Données factices pour les différentes tables
-const comptes = [
-  { id: 1, nom: 'Dupont', prenom: 'Jean', role: 'admin', email:'exemple@gmail.com', telephone: '+213000000000', organisation: 'Organisation 1', sexe: 'homme', password: '123456' },
-  { id: 2, nom: 'Martin', prenom: 'Sophie', role: 'user', email:'exemple@gmail.com', telephone: '+213000000000', organisation: 'Organisation 2', sexe: 'femme', password: '123456' },
-  { id: 3, nom: 'Lefebvre', prenom: 'Luc', role: 'manager', email:'exemple@gmail.com', telephone: '+213000000000', organisation: 'Organisation 1', sexe: 'homme', password: '123456' },
-];
-
 const Comptes = () => {
-  const [comptesData, setComptesData] = useState(comptes);
+  const [comptesData, setComptesData] = useState([]);
   const [userSession, setUserSession] = useState(null);
   const router = useRouter();
+
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:1937",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const getAllUsers = async () => {
+    try{
+      const response = await axiosInstance.get("/user/Allusers")
+      console.log("users = ", response.data)
+      setComptesData(response.data)
+    } catch(error) {
+      console.error("Erreur lors de la récuperation des utilisateurs :", error);
+    }
+  }
+
+  useEffect(() => {
+    getAllUsers();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {

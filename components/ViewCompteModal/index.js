@@ -1,96 +1,105 @@
 import React from 'react';
-import { FaTimes, FaUserAlt, FaBuilding, FaUserFriends, FaEnvelope, FaPhoneAlt, FaVenusMars } from 'react-icons/fa';
+import { FaTimes, FaUser, FaEnvelope, FaPhoneAlt, FaVenusMars, FaBuilding, FaUsers } from 'react-icons/fa';
 
 const ViewCompteModal = ({ compte, onClose }) => {
-  if (!compte) {
-    return null;
+  if (!compte) return null;
+
+  // Fonction pour regrouper les équipes par organisation
+  const groupTeamsByOrganization = () => {
+    const teamsByOrg = {};
+    compte.roles.forEach(role => {
+      if (role.role === 'teamBoss' || role.role === 'employee') {
+        const orgId = role.organization._id;
+        const teamsForOrg = compte.team.filter(team => team.Organization === orgId);
+        if (teamsForOrg.length > 0) {
+          teamsByOrg[orgId] = {
+            organization: role.organization,
+            teams: teamsForOrg,
+            role: role.role
+          };
+        }
+      }
+    });
+    return teamsByOrg;
+  };
+
+  const teamsByOrg = groupTeamsByOrganization();
+  const getRole = (role) => {
+    switch (role) {
+      case "teamBoss":
+        return "Chef de l'équipe"
+        break;
+      case "prjctBoss":
+        return "Chef de projet"
+        break;
+      case "employee":
+        return "Membre dans l'équipe"
+        break;
+    }
   }
 
   return (
     <div className="fixed z-10 inset-0 overflow-y-auto flex justify-center items-center" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
 
-      <div className="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full relative">
-        <div className="bg-[#314155] h-7 flex items-center justify-between px-4">
-          <div></div>
+      <div className="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-xl sm:w-full relative">
+        <div className="bg-[#314155] h-10 flex items-center justify-between px-4">
+          <h3 className="text-lg font-medium text-white">Détails du compte</h3>
           <button type="button" className="text-white hover:text-gray-300" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
 
-        <div className="flex flex-col items-center md:flex-row p-4">
-          <div className="bg-[#314155] w-32 h-32 flex items-center justify-center md:ml-6 rounded-full md:mb-0 mb-4">
-            <FaUserAlt className="text-6xl text-white" />
-          </div>
-
-          <div className="md:ml-12 w-full md:w-2/3 md:pl-4 relative text-center md:text-left">
-            <h2 className="text-2xl font-semibold font-serif mb-1">{compte.nom} {compte.prenom}</h2>
-            <p className="text-gray-500 md:ml-2">Rôle: {compte.role}</p>
-            <p className="text-gray-500 md:ml-2">ID: {compte.id}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col md:flex-row py-4 px-6">
-          <div className="w-full md:w-1/2 pr-4 mb-4 md:mb-0">
-            <div className="flex items-center mb-2">
-              <FaBuilding className="text-gray-400 mr-2" />
-              <p className="text-gray-400 font-semibold">Organisation</p>
+        <div className="p-6 max-h-[80vh] overflow-y-auto">
+          <div className="flex items-center mb-4">
+            <div className="h-20 w-20 relative flex justify-center items-center rounded-full bg-[#314155] text-2xl text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 mr-4">    
+              {compte?.nom[0].toUpperCase()}{" "}
+              {compte?.prenom[0].toUpperCase()} 
             </div>
-            <div className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              {compte.organisation}
-            </div>
-
-            <div className="flex items-center mt-2 mb-2">
-              
-              <p className="text-gray-400 font-semibold">Sexe</p>
-            </div>
-            <div className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              {compte.sexe==='homme' ? 
-                (<div className="ml-2 flex items-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  height="24"
-                  viewBox="0 -960 960 960"
-                  width="24"
-                >
-                  <path d="M220-80v-300h-60v-220q0-33 23.5-56.5T240-680h120q33 0 56.5 23.5T440-600v220h-60v300H220Zm80-640q-33 0-56.5-23.5T220-800q0-33 23.5-56.5T300-880q33 0 56.5 23.5T380-800q0 33-23.5 56.5T300-720Z" />
-                </svg>
-                <span className="ml-2">Homme</span>
-              </div>) 
-            : (
-              <div className="ml-2 flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          height="24"
-                          viewBox="0 -960 960 960"
-                          width="24"
-                        >
-                          <path d="M600-80v-240H480l102-306q8-26 29.5-40t48.5-14q27 0 48.5 14t29.5 40l102 306H720v240H600Zm60-640q-33 0-56.5-23.5T580-800q0-33 23.5-56.5T660-880q33 0 56.5 23.5T740-800q0 33-23.5 56.5T660-720Z" />
-                        </svg>
-                        <span className="ml-2">Femme</span>
-                      </div>
-            )}
-
+            <div>
+              <h2 className="text-2xl font-semibold">{`${compte.nom} ${compte.prenom}`}</h2>
+              <p className="flex items-center text-gray-600">
+                <FaEnvelope className="text-gray-400 mr-2"/>
+                <span>{compte.email}</span>
+              </p>
+              <p className="flex items-center text-gray-600">
+                <FaPhoneAlt className="text-gray-400 mr-2" />
+                <span>{compte.phoneNumber}</span>
+              </p>
+              <p className="flex items-center text-gray-600">
+                <FaVenusMars className="text-gray-400 mr-2" />
+                <span>{JSON.parse(compte.gender).label}</span>
+              </p>
             </div>
           </div>
-
-          <div className="w-full md:w-1/2 mt-4 md:mt-0 md:pl-4 md:border-l-2 md:border-[#314155]">
-            <div className="flex items-center mb-2">
-              <FaEnvelope className="text-gray-400 mr-2" />
-              <p className="text-gray-400 font-semibold">Email</p>
-            </div>
-            <div className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              {compte.email}
-            </div>
-
-            <div className="flex items-center mt-2 mb-2">
-              <FaPhoneAlt className="text-gray-400 mr-2" />
-              <p className="text-gray-400 font-semibold">Téléphone</p>
-            </div>
-            <div className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-              {compte.telephone}
-            </div>
-          </div>
+          {(compte.roles.length == 1 && compte.roles[0].role === "individual") 
+            ? (
+              <div className="w-full my-4 py-2 text-gray-00 flex justify-center items-center border-gray-600 border-2 border-dashed">
+                No Organizations
+              </div>
+              ) 
+            :
+              (
+                <div className="mb-6">
+                <h4 className="text-lg font-semibold mb-2">Rôles, Organisations et Équipes</h4>
+                {compte.roles.map((role, index) => (
+                  <div key={index} className="bg-gray-100 p-3 rounded-lg mb-2">
+                    <div className="flex items-center mb-1">
+                      <FaBuilding className="text-gray-400 mr-2" />
+                      <span className="font-medium">{role.organization.Name}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 ml-6 mb-2">
+                      {getRole(role.role)}
+                      {teamsByOrg[role.organization._id] && (
+                          teamsByOrg[role.organization._id].teams.map((team, teamIndex) => (
+                              ` ${team.Name}`
+                          ))
+                      )}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              )}
         </div>
       </div>
     </div>

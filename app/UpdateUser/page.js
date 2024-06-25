@@ -28,6 +28,10 @@ const UpdateUser = () => {
 
     return unsubscribe;
   }, [router]);
+
+  const handleCancel = () => {
+    router.push('/Comptes');
+  }
   
 
   return  userSession === null ? 
@@ -38,7 +42,7 @@ const UpdateUser = () => {
       <Navigation activeTab="" />
       <div className="">
         {compteDetails ? (
-          <UpdateUserForm compte={compte} />
+          <UpdateUserForm compte={compte} handleCancel={handleCancel}/>
         ) : (
           <p>Aucun compte à modifier</p>
         )}
