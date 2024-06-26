@@ -1,284 +1,246 @@
-"use client";
 import React, { useState } from "react";
-import { Formik } from "formik";
-import { FaPlus, FaUser, FaEnvelope, FaLock, FaUserCircle, FaPhone, FaVenusMars } from "react-icons/fa";
+import { Formik, Field, ErrorMessage } from "formik";
+import { FaEye, FaEyeSlash, FaEnvelope, FaPhoneAlt, FaVenusMars } from "react-icons/fa";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import Select from "react-select";
-import Countries from "../Countries";
+import * as Yup from 'yup';
+import axios from "axios";
+import { auth } from '../../app/Firebase/firebaseConfig'
 
-const countries = Countries;
+const AddCompteForm = ({ handleCancel }) => {
+  const [phoneValue, setPhoneValue] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupType, setPopupType] = useState('');
+  const [popupMessage, setPopupMessage] = useState('');
 
-const AddCompteForm = () => {
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [value, setValue] = useState();
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:1937",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-  const getOptionLabel = (option) => option.name;
-  const getOptionValue = (option) => JSON.stringify(option);
-
-  const handleChangeCountry = (selectedOption) => {
-    setSelectedCountry(selectedOption);
+  const initialValues = {
+    nom: "",
+    prenom: "",
+    email: "",
+    phoneNumber: "",
+    gender: "",
+    motDePasse: "",
+    confirmMotDePasse: "",
   };
 
-  const handleChangePhoneNumber = (value) => {
-    setValue(value);
+  const validationSchema = Yup.object().shape({
+    nom: Yup.string().required("Le nom est requis"),
+    prenom: Yup.string().required("Le prénom est requis"),
+    email: Yup.string().email("Email invalide").required("L'email est requis"),
+    phoneNumber: Yup.string().required("Le numéro de téléphone est requis"),
+    gender: Yup.string().required("Le genre est requis"),
+    motDePasse: Yup.string().min(8, "Le mot de passe doit contenir au moins 8 caractères").required("Le mot de passe est requis"),
+    confirmMotDePasse: Yup.string().oneOf([Yup.ref('motDePasse'), null], 'Les mots de passe doivent correspondre').required("La confirmation du mot de passe est requise")
+  });
+
+  const genderOptions = [
+    { value: "male", label: "Homme" },
+    { value: "female", label: "Femme" }
+  ];
+
+  const handleError = (errorMessage) => {
+    setPopupType('error');
+    setPopupMessage(errorMessage);
+    setShowPopup(true);
   };
+
+  const handleSuccess = (message) => {
+    setPopupType('success');
+    setPopupMessage(message);
+    setShowPopup(true);
+  };
+
+  const deleteUser = async (email) => {
+    try {
+      const response = await axiosInstance.delete(`/user/users?email=${email}`);
+      if (response.status === 200) {
+        console.log("User deleted successfully");
+      } else {
+        console.error("Error deleting user:", response.data.message);
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
+  };
+
+  const sendUserData = async (values) => {
+    try {
+      const response = await axiosInstance.post("/user/users", {
+        nom: values.nom,
+        prenom: values.prenom,
+        email: values.email,
+        roles: [{ role: "individual", organization: null }],
+        phoneNumber: values.phoneNumber,
+        gender: values.gender,
+        password: values.motDePasse,
+      });
+      console.log(response.data);
+    } catch (error) {
+      throw new Error(error?.response?.data?.message || "Email ou numéro de téléphone déjà utilisé ");
+    }
+  };
+
+  const signUPFireBase = async (values) => {
+    try {
+      await createUserWithEmailAndPassword(auth, values.email, values.motDePasse);
+      console.log("Succès");
+    } catch (error) {
+      await deleteUser(values.email);
+      throw new Error(error.message || "Erreur lors de la création du compte Firebase");
+    }
+  };
+
+  const handleSubmit = async (values, { setSubmitting }) => {
+    try {
+      await sendUserData(values);
+      await signUPFireBase(values);
+      handleSuccess("Compte créé avec succès !");
+    } catch (error) {
+      handleError(error.message || "Une erreur est survenue lors de la création du compte.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <div className="flex-grow flex items-center justify-center bg-white">
-      <div className="w-full max-w-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-[url('/BG.jpeg')]">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl">
         <Formik
-          className="w-full"
-          initialValues={{
-            nom: "",
-            prenom: "",
-            email: "",
-            role: "",
-            motDePasse: "",
-            confirmMotDePasse: "",
-            telephone: "",
-            sexe: ""
-          }}
-          validate={(values) => {
-            const errors = {};
-            // Ajoutez vos règles de validation ici
-            return errors;
-          }}
-          onSubmit={(values, { setSubmitting }) => {
-            setTimeout(async () => {
-              alert(JSON.stringify(values, null, 2));
-              setSubmitting(false);
-            }, 400);
-          }}
+          initialValues={initialValues}
+          validationSchema={validationSchema}
+          onSubmit={handleSubmit}
         >
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            /* and other goodies */
-          }) => (
-            <form
-              className="bg-gray-100 shadow-md rounded px-8 pt-6 pb-8 mb-4"
-              onSubmit={handleSubmit}
-            >
-              <div className="flex justify-center mb-6">
-                <h1 className="flex text-2xl">
-                  <FaPlus className="mr-4 text-2xl" />
-                  Ajouter un compte
-                </h1>
+          {({ values, setFieldValue, handleSubmit, errors, touched }) => (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold mb-2">Informations personnelles</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="nom" className="block mb-1">Nom</label>
+                    <Field name="nom" type="text" className="w-full p-2 border rounded" />
+                    <ErrorMessage name="nom" component="div" className="text-red-500 text-sm" />
+                  </div>
+                  <div>
+                    <label htmlFor="prenom" className="block mb-1">Prénom</label>
+                    <Field name="prenom" type="text" className="w-full p-2 border rounded" />
+                    <ErrorMessage name="prenom" component="div" className="text-red-500 text-sm" />
+                  </div>
+                </div>
               </div>
 
-              <div className="mb-4">
-                <h2 className="text-lg font-bold mb-2">
-                  <FaUser className="mr-2 inline" />
-                  Informations personnelles
-                </h2>
-                <div className="flex mb-2">
-                  <div className="w-1/2 mr-2">
-                    <label
-                      className="block text-gray-700 font-bold mb-2"
-                      htmlFor="nom"
+              <div>
+                <label htmlFor="email" className="block mb-1 flex items-center">
+                  <FaEnvelope className="mr-2" /> Email
+                </label>
+                <Field name="email" type="email" className="w-full p-2 border rounded" />
+                <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
+              </div>
+
+              <div>
+                <label htmlFor="phoneNumber" className="block mb-1 flex items-center">
+                  <FaPhoneAlt className="mr-2" /> Numéro de téléphone
+                </label>
+                <PhoneInput
+                  value={phoneValue}
+                  onChange={(value) => {
+                    setPhoneValue(value);
+                    setFieldValue("phoneNumber", value);
+                  }}
+                  className="w-full p-2 border rounded"
+                />
+                <ErrorMessage name="phoneNumber" component="div" className="text-red-500 text-sm" />
+              </div>
+
+              <div>
+                <label htmlFor="gender" className="block mb-1 flex items-center">
+                  <FaVenusMars className="mr-2" /> Genre
+                </label>
+                <Select
+                  options={genderOptions}
+                  value={genderOptions.find(option => option.value === values.gender)}
+                  onChange={(selectedOption) => setFieldValue("gender", selectedOption.value)}
+                  className="w-full"
+                />
+                <ErrorMessage name="gender" component="div" className="text-red-500 text-sm" />
+              </div>
+
+              <div>
+                <h2 className="text-xl font-semibold mb-2">Sécurité</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative">
+                    <label htmlFor="motDePasse" className="block mb-1">Mot de passe</label>
+                    <Field name="motDePasse" type={showPassword ? "text" : "password"} className="w-full p-2 border rounded pr-10" />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 mt-6"
+                      onClick={() => setShowPassword(!showPassword)}
                     >
-                      Nom
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="nom"
-                      type="text"
-                      name="nom"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.nom}
-                    />
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                    <ErrorMessage name="motDePasse" component="div" className="text-red-500 text-sm" />
                   </div>
-                  <div className="w-1/2">
-                    <label
-                      className="block text-gray-700 font-bold mb-2"
-                      htmlFor="prenom"
+                  <div className="relative">
+                    <label htmlFor="confirmMotDePasse" className="block mb-1">Confirmer le mot de passe</label>
+                    <Field name="confirmMotDePasse" type={showConfirmPassword ? "text" : "password"} className="w-full p-2 border rounded pr-10" />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 mt-6"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     >
-                      Prénom
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="prenom"
-                      type="text"
-                      name="prenom"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.prenom}
-                    />
-                  </div>
-                </div>
-                <div className="mb-2">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="email"
-                  >
-                    Email
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="email"
-                    type="email"
-                    name="email"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.email}
-                  />
-                </div>
-                <div className="mb-2">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="telephone"
-                  >
-                    Numéro de téléphone
-                  </label>
-                  <PhoneInput
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    placeholder="Entrez le numéro de téléphone"
-                    value={value}
-                    onChange={handleChangePhoneNumber}
-                  />
-                </div>
-                <div className="mb-2">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="sexe"
-                  >
-                    Sexe
-                  </label>
-                  <div className="flex">
-                    <div className="mr-4 flex items-center">
-                      <input
-                        type="radio"
-                        name="sexe"
-                        value="homme"
-                        checked={values.sexe === "homme"}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className="form-radio"
-                      />
-                      <div className="ml-2 flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          height="24"
-                          viewBox="0 -960 960 960"
-                          width="24"
-                        >
-                          <path d="M220-80v-300h-60v-220q0-33 23.5-56.5T240-680h120q33 0 56.5 23.5T440-600v220h-60v300H220Zm80-640q-33 0-56.5-23.5T220-800q0-33 23.5-56.5T300-880q33 0 56.5 23.5T380-800q0 33-23.5 56.5T300-720Z" />
-                        </svg>
-                        <span className="ml-2">Homme</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name="sexe"
-                        value="femme"
-                        checked={values.sexe === "femme"}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className="form-radio"
-                      />
-                      <div className="ml-2 flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          height="24"
-                          viewBox="0 -960 960 960"
-                          width="24"
-                        >
-                          <path d="M600-80v-240H480l102-306q8-26 29.5-40t48.5-14q27 0 48.5 14t29.5 40l102 306H720v240H600Zm60-640q-33 0-56.5-23.5T580-800q0-33 23.5-56.5T660-880q33 0 56.5 23.5T740-800q0 33-23.5 56.5T660-720Z" />
-                        </svg>
-                        <span className="ml-2">Femme</span>
-                      </div>
-                    </div>
+                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                    <ErrorMessage name="confirmMotDePasse" component="div" className="text-red-500 text-sm" />
                   </div>
                 </div>
               </div>
 
-              <div className="mb-4">
-                <h2 className="text-lg font-bold mb-2">
-                  <FaUserCircle className="mr-2 inline" />
-                  Rôle
-                </h2>
-                <div className="mb-2">
-                  <select
-                    value={values.role}
-                    name="role"
-                    id="role"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  >
-                    <option value="" disabled>
-                      Sélectionnez un rôle
-                    </option>
-                    <option value="admin">Administrateur</option>
-                    <option value="manager">Gestionnaire</option>
-                    <option value="user">Utilisateur</option>
-                  </select>
-                </div>
+              <div className="flex justify-center space-x-4">
+                <button type="button" onClick={handleCancel} className="bg-gray-300 text-gray-800 px-6 py-2 rounded">
+                  Annuler
+                </button>
+                <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded">
+                  Ajouter le compte
+                </button>
               </div>
-
-              <div className="mb-4">
-                <h2 className="text-lg font-bold mb-2">
-                  <FaLock className="mr-2 inline" />
-                  Sécurité
-                </h2>
-                <div className="mb-2">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="motDePasse"
-                  >
-                    Mot de passe
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="motDePasse"
-                    type="password"
-                    name="motDePasse"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                   value={values.motDePasse}
-                 />
-               </div>
-               <div className="mb-2">
-                 <label
-                   className="block text-gray-700 font-bold mb-2"
-                   htmlFor="confirmMotDePasse"
-                 >
-                   Confirmer le mot de passe
-                 </label>
-                 <input
-                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                   id="confirmMotDePasse"
-                   type="password"
-                   name="confirmMotDePasse"
-                   onChange={handleChange}
-                   onBlur={handleBlur}
-                   value={values.confirmMotDePasse}
-                 />
-               </div>
-             </div>
-
-             <div className="flex items-center justify-center">
-               <button
-                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                 type="submit"
-                 disabled={isSubmitting}
-               >
-                 Ajouter un compte
-               </button>
-             </div>
-           </form>
-         )}
-       </Formik>
-     </div>
-   </div>
- );
+            </form>
+          )}
+        </Formik>
+        
+        {showPopup && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className={`bg-white p-6 rounded-lg shadow-lg ${popupType === 'success' ? 'border-green-500' : 'border-red-500'} border-4`}>
+              <h2 className={`text-2xl font-bold mb-4 ${popupType === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+                {popupType === 'success' ? 'Succès' : 'Erreur'}
+              </h2>
+              <p className="mb-4">{popupMessage}</p>
+              <button
+                onClick={() => {
+                  setShowPopup(false);
+                  if (popupType === 'success') {
+                    handleCancel();
+                  }
+                }}
+                className={`px-4 py-2 rounded ${popupType === 'success' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'} text-white`}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default AddCompteForm;

@@ -24,6 +24,10 @@ const AddUser = () => {
 
     return unsubscribe;
   }, [router]);
+
+  const handleCancel = () => {
+    router.push('/Comptes');
+  }
   
 
   return  userSession === null ? 
@@ -32,7 +36,7 @@ const AddUser = () => {
   ) : (
     <div className='flex flex-col min-h-screen'>
       <Navigation activeTab="" />
-      <AddUserForm />
+      <AddUserForm handleCancel={handleCancel}/>
     </div>
   );
 };

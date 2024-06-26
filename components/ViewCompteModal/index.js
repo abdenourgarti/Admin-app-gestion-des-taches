@@ -68,7 +68,18 @@ const ViewCompteModal = ({ compte, onClose }) => {
               </p>
               <p className="flex items-center text-gray-600">
                 <FaVenusMars className="text-gray-400 mr-2" />
-                <span>{JSON.parse(compte.gender).label}</span>
+                <span>{(() => {
+                  if (typeof compte.gender === 'string') {
+                    try {
+                      const parsedGender = JSON.parse(compte.gender);
+                      return parsedGender.value || "";
+                    } catch (e) {
+                      // Si le parsing échoue, on considère que c'est déjà une valeur simple
+                      return compte.gender;
+                    }
+                  }
+                  return compte.gender?.value || "";
+                })()}</span>
               </p>
             </div>
           </div>

@@ -12,6 +12,7 @@ import axios from "axios";
 const Comptes = () => {
   const [comptesData, setComptesData] = useState([]);
   const [userSession, setUserSession] = useState(null);
+  const [reload, setReload] = useState(false)
   const router = useRouter();
 
   const axiosInstance = axios.create({
@@ -20,6 +21,9 @@ const Comptes = () => {
       "Content-Type": "application/json",
     },
   });
+  const recharge = () => {
+    setReload(!reload)
+  }
 
   const getAllUsers = async () => {
     try{
@@ -48,10 +52,9 @@ const Comptes = () => {
     return unsubscribe;
   }, [router]);
 
-  const handleDeleteCompte = (compte) => {
-    const updatedComptes = comptesData.filter((c) => c.id !== compte.id);
-    setComptesData(updatedComptes);
-  };
+  useEffect(() => {
+    getAllUsers();    
+  }, [reload]);
 
   return userSession === null ? 
   (
@@ -60,7 +63,7 @@ const Comptes = () => {
     <div className="min-h-screen bg-cover bg-center">
       <Navigation activeTab="tab1" />
       <div className="mx-auto h-screen bg-white rounded-b-lg p-4">
-        <CompteTable comptes={comptesData} onDeleteCompte={handleDeleteCompte} />
+        <CompteTable comptes={comptesData} recharge={recharge}/>
       </div>
     </div>
   );

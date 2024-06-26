@@ -29,6 +29,9 @@ const UpdateOrganisation = () => {
 
     return unsubscribe;
   }, [router]);
+  const handleCancel = () => {
+    router.push('/Organisations');
+  }
   
 
   return  userSession === null ? 
@@ -39,7 +42,7 @@ const UpdateOrganisation = () => {
       <Navigation activeTab="" />
       <div className="">
         {organisationDetails ? (
-          <UpdateOrganisationForm organisation={organisation} />
+          <UpdateOrganisationForm organisation={organisation} handleCancel={handleCancel}/>
         ) : (
           <p>Aucune Organisation à modifier</p>
         )}

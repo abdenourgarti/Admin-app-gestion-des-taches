@@ -1,104 +1,142 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Formik } from "formik";
-import { FaUserTie, FaBriefcase, FaLock, FaEdit, FaTimes, FaEyeSlash, FaEye } from "react-icons/fa";
+import { Formik, Field, ErrorMessage } from "formik";
+import { FaUserTie, FaBriefcase, FaLock, FaEdit, FaTimes, FaEyeSlash, FaEye, FaEnvelope, FaPhoneAlt, FaMapMarkerAlt } from "react-icons/fa";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import Select from "react-select";
 import Countries from "../Countries";
-import _ from 'lodash';
+import * as Yup from 'yup';
+import axios from "axios";
 
 const countries = Countries;
 
-const UpdateOrganisationForm = ({ organisation }) => {
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [value, setValue] = useState("");
-  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+const UpdateOrganisationForm = ({ organisation, handleCancel }) => {
+  const parseJSON = (jsonString) => {
+    try {
+      return typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+    } catch (e) {
+      return jsonString;
+    }
+  };
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:1937",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const [phoneValue, setPhoneValue] = useState(organisation.Boss.phoneNumber || "");
+  const [selectedCountry, setSelectedCountry] = useState(() => {
+    const countryName = parseJSON(organisation?.country)?.name || organisation?.country;
+    return countries.find(country => country.name === countryName) || null;
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showUpdateConfirmation, setShowUpdateConfirmation] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupType, setPopupType] = useState("success");
 
   useEffect(() => {
-    const initialCountry = _.find(countries, { code: organisation.pays });
-    setSelectedCountry(initialCountry || null);
-    setValue(organisation.telephone);
-  }, [organisation.pays, organisation.telephone]);
+    const countryName = parseJSON(organisation?.country)?.name || organisation?.country;
+    const country = countries.find(c => c.name === countryName);
+    if (country) {
+      setSelectedCountry(country);
+    }
+  }, [organisation]);
 
-  const getOptionLabel = (option) => option.name;
-  const getOptionValue = (option) => JSON.stringify(option);
+  console.log("organisation.country:", organisation?.country);
+  console.log("selectedCountry:", selectedCountry);
 
-  const handleChangeCountry = (selectedOption, setFieldValue) => {
-    setSelectedCountry(selectedOption);
-    setFieldValue('pays', selectedOption);
+  const validationSchema = Yup.object().shape({
+    prenom: Yup.string().required("Le prénom est requis"),
+    nom: Yup.string().required("Le nom est requis"),
+    nomEntreprise: Yup.string().required("Le nom de l'entreprise est requis"),
+    email: Yup.string().email("Email invalide").required("L'email est requis"),
+    telephone: Yup.string().required("Le numéro de téléphone est requis"),
+    pays: Yup.string().required("Le pays est requis"),
+    province: Yup.string().required("La province est requise"),
+    rue: Yup.string().required("La rue est requise"),
+    nouveauMotDePasse: Yup.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    confirmNouveauMotDePasse: Yup.string().oneOf([Yup.ref('nouveauMotDePasse'), null], 'Les mots de passe doivent correspondre')
+  });
+
+  const handleSubmit = (values) => {
+    setShowUpdateConfirmation(true);
   };
 
-  const handleChangePhoneNumber = (value, setFieldValue) => {
-    setValue(value);
-    setFieldValue('telephone', value); // Mettre à jour la valeur de telephone dans Formik
-  };
+  const confirmUpdate = async (values) => {
+    console.log(values);
+    setShowUpdateConfirmation(false);
+    try {  
+      const userData = {
+        nom: values.nom,
+        prenom: values.prenom,
+        email: values.email,
+        phoneNumber: values.phoneNumber,
+      };
+  
+      if (values.newPassword) {
+        userData.password = values.newPassword;
+      }
+  
+      const response = await axiosInstance.patch(`/user/updateUser?id=${organisation.Boss._id}`, userData);
+      console.log("pays = ", values.pays);
 
-  const handleConfirmUpdate = () => {
-    setShowConfirmationModal(true);
-  };
-
-  const cancelUpdate = () => {
-    setShowConfirmationModal(false);
-  };
-  const toggleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const toggleShowConfirmPassword = () => {
-    setShowConfirmPassword(!showConfirmPassword);
+      const orgData = {
+        Name : values.nomEntreprise,
+        country : values.pays,
+        province : values.province,
+        street : values.rue
+      }
+      const response1 = await axiosInstance.patch(`/organization/organizations/${organisation._id}`, orgData);
+  
+      if (response.status === 200 && response1.status === 200) {
+        setPopupMessage("Organisation mise à jour avec succès !");
+        setPopupType("success");
+        setShowPopup(true);
+      } else {
+        if (response.status !== 200){
+          setPopupMessage("Erreur lors de la mise à jour de l'utilisateur.");
+          setPopupType("error");
+          setShowPopup(true);
+        }
+        if (response1.status !== 200){
+          setPopupMessage("Erreur lors de la mise à jour de l'organisation.");
+          setPopupType("error");
+          setShowPopup(true);
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'utilisateur :", error);
+      setPopupMessage("Erreur de connexion au serveur.");
+      setPopupType("error");
+      setShowPopup(true);
+    }
   };
 
   return (
-    <div className="flex-grow flex items-center justify-center bg-white">
-      <div className="w-full max-w-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-[url('/BG.jpeg')]">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl">
         <Formik
-          className="w-full"
           initialValues={{
-            // Propriétaire de l'entreprise
-            prenom: organisation.proprietaireNom || "",
-            nom: organisation.proprietaireNom || "",
-            // Informations sur l'entreprise
-            nomEntreprise: organisation.nom || "",
-            email: organisation.email || "",
-            telephone: organisation.telephone || "",
-            pays: _.find(countries, { code: organisation.pays }) || null,
-            province: organisation.province || "",
-            rue: organisation.rue || "",
-            // Sécurité
-            motDePasse: organisation.password || "",
-            confirmMotDePasse: organisation.password || "",
+            prenom: organisation?.Boss.prenom || "",
+            nom: organisation?.Boss.nom || "",
+            nomEntreprise: organisation?.Name || "",
+            email: organisation?.Boss.email || "",
+            telephone: organisation?.Boss.phoneNumber || "",
+            pays: selectedCountry?.name || "",
+            province: organisation?.province || "",
+            rue: organisation?.street || "",
+            nouveauMotDePasse: "",
+            confirmNouveauMotDePasse: "",
           }}
-          validate={(values) => {
-            const errors = {};
-            // Ajoutez vos règles de validation ici
-            return errors;
-          }}
-          onSubmit={(values, { setSubmitting }) => {
-            setTimeout(async () => {
-              alert(JSON.stringify(values, null, 2));
-              setSubmitting(false);
-              cancelUpdate();
-              window.location.replace('/Organisations');
-            }, 400);
-          }}
+          validationSchema={validationSchema}
+          onSubmit={handleSubmit}
         >
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting,
-            setFieldValue,
-          }) => (
-            <form
-              className="bg-gray-100 shadow-md rounded px-8 pt-6 pb-8 mb-4"
-              onSubmit={handleSubmit}
-            >
+          {({ values, setFieldValue, handleSubmit, errors, touched }) => (
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="flex justify-center mb-6">
                 <h1 className="flex text-2xl">
                   <FaEdit className="mr-4 text-2xl" />
@@ -106,327 +144,201 @@ const UpdateOrganisationForm = ({ organisation }) => {
                 </h1>
               </div>
 
-              {/* Propriétaire de l'entreprise */}
-              <div className="mb-4">
-                <h2 className="text-lg font-bold mb-2">
+              <div>
+                <h2 className="text-xl font-semibold mb-2">
                   <FaUserTie className="mr-2 inline" />
                   Propriétaire de l'entreprise
                 </h2>
-                <div className="flex mb-2">
-                  <div className="w-1/2 mr-2">
-                    <label
-                      className="block text-gray-700 font-bold mb-2"
-                      htmlFor="prenom"
-                    >
-                      Prénom
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="prenom"
-                      type="text"
-                      name="prenom"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.prenom}
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="prenom" className="block mb-1">Prénom</label>
+                    <Field name="prenom" type="text" className="w-full p-2 border rounded" />
+                    <ErrorMessage name="prenom" component="div" className="text-red-500 text-sm" />
                   </div>
-                  <div className="w-1/2">
-                    <label
-                      className="block text-gray-700 font-bold mb-2"
-                      htmlFor="nom"
-                    >
-                      Nom
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="nom"
-                      type="text"
-                      name="nom"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.nom}
-                    />
+                  <div>
+                    <label htmlFor="nom" className="block mb-1">Nom</label>
+                    <Field name="nom" type="text" className="w-full p-2 border rounded" />
+                    <ErrorMessage name="nom" component="div" className="text-red-500 text-sm" />
                   </div>
                 </div>
               </div>
 
-              {/* Informations sur l'entreprise */}
-              <div className="mb-4">
-                <h2 className="text-lg font-bold mb-2">
+              <div>
+                <h2 className="text-xl font-semibold mb-2">
                   <FaBriefcase className="mr-2 inline" />
                   Informations sur l'entreprise
                 </h2>
                 <div className="mb-2">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="nomEntreprise"
-                  >
-                    Nom de l'entreprise
-                  </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="nomEntreprise"
-                    type="text"
-                    name="nomEntreprise"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.nomEntreprise}
-                  />
+                  <label htmlFor="nomEntreprise" className="block mb-1">Nom de l'entreprise</label>
+                  <Field name="nomEntreprise" type="text" className="w-full p-2 border rounded" />
+                  <ErrorMessage name="nomEntreprise" component="div" className="text-red-500 text-sm" />
                 </div>
                 <div className="mb-2">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="email"
-                  >
-                    Email
+                  <label htmlFor="email" className="block mb-1 flex items-center">
+                    <FaEnvelope className="mr-2" /> Email
                   </label>
-                  <input
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    id="email"
-                    type="email"
-                    name="email"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.email}
-                  />
+                  <Field name="email" type="email" className="w-full p-2 border rounded" />
+                  <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
                 </div>
                 <div className="mb-2">
-                  <label
-                    className="block text-gray-700 font-bold mb-2"
-                    htmlFor="telephone"
-                  >
-                    Numéro de téléphone
+                  <label htmlFor="telephone" className="block mb-1 flex items-center">
+                    <FaPhoneAlt className="mr-2" /> Numéro de téléphone
                   </label>
                   <PhoneInput
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    placeholder="Entrez le numéro de téléphone"
-                    value={value}
-                    onChange={(value) => handleChangePhoneNumber(value, setFieldValue)} // Passer setFieldValue à handleChangePhoneNumber
+                    value={phoneValue}
+                    onChange={(value) => {
+                      setPhoneValue(value);
+                      setFieldValue("telephone", value);
+                    }}
+                    className="w-full p-2 border rounded"
                   />
+                  <ErrorMessage name="telephone" component="div" className="text-red-500 text-sm" />
                 </div>
-                <div className="flex mb-2">
-                  <div className="w-1/2 mr-2">
-                    <label
-                      className="block text-gray-700 font-bold mb-2"
-                      htmlFor="pays"
-                    >
-                      Pays
-                    </label>
-                    <div className="flex justify-start items-center px-2 input rounded-xl h-10 ">
-                      {!selectedCountry ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          height="24"
-                          viewBox="0 -960 960 960"
-                          width="24"
-                        >
-                          <path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm-40-82v-78q-33 0-56.5-23.5T360-320v-40L168-552q-3 18-5.5 36t-2.5 36q0 121 79.5 212T440-162Zm276-102q20-22 36-47.5t26.5-53q10.5-27.5 16-56.5t5.5-59q0-98-54.5-179T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h240q17 0 28.5 11.5T600-440v120h40q26 0 47 15.5t29 40.5Z" />
-                          </svg>
-                        ) : (
-                          <img
-                            className="h-6 w-6"
-                            alt="United States"
-                            src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${selectedCountry.code}.svg`}
-                          />
-                        )}
-                        <Select
-                          value={selectedCountry} // Utiliser selectedCountry comme valeur
-                          styles={{
-                            control: (baseStyles, state) => ({
-                              ...baseStyles,
-                              borderWidth: state.isFocused ? 0 : 0,
-                            }),
-                          }}
-                          placeholder="Pays"
-                          className="w-full"
-                          options={countries}
-                          onChange={(option) => {
-                            handleChangeCountry(option, setFieldValue); // Passer setFieldValue à handleChangeCountry
-                          }}
-                          getOptionLabel={getOptionLabel}
-                          getOptionValue={getOptionValue}
-                          components={{
-                            Option: ({ innerProps, isDisabled, isFocused, isSelected, data }) => (
-                              <div
-                                {...innerProps}
-                                className={`flex items-center justify-between px-2 py-1 ${
-                                  isSelected
-                                    ? "bg-gray-200"
-                                    : isFocused
-                                    ? "bg-gray-100"
-                                    : "bg-white"
-                                }`}
-                              >
-                                <div className="flex items-center">
-                                  <img
-                                    src={`http://purecatamphetamine.github.io/country-flag-icons/3x2/${data.code}.svg`}
-                                    alt={data.name}
-                                    className="h-6 w-6 mr-2"
-                                  />
-                                  {data.name}
-                                </div>
-                              </div>
-                            ),
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="w-1/2">
-                      <label
-                        className="block text-gray-700 font-bold mb-2"
-                        htmlFor="province"
-                      >
-                        Province
-                      </label>
-                      <input
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="province"
-                        type="text"
-                        name="province"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        value={values.province}
-                      />
-                    </div>
-                  </div>
-                  <div className="mb-2">
-                    <label
-                      className="block text-gray-700 font-bold mb-2"
-                      htmlFor="rue"
-                    >
-                      Rue
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="rue"
-                      type="text"
-                      name="rue"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      value={values.rue}
+                <div className="grid grid-cols-2 gap-4 mb-2">
+                  <div>
+                    <label htmlFor="pays" className="block mb-1">Pays</label>
+                    <Select
+                      options={countries}
+                      value={selectedCountry}
+                      onChange={(selectedOption) => {
+                        setSelectedCountry(selectedOption);
+                        setFieldValue("pays", selectedOption.name);
+                      }}
+                      getOptionLabel={(option) => option.name}
+                      getOptionValue={(option) => option.code}
+                      className="w-full"
                     />
+                    <ErrorMessage name="pays" component="div" className="text-red-500 text-sm" />
+                  </div>
+                  <div>
+                    <label htmlFor="province" className="block mb-1">Province</label>
+                    <Field name="province" type="text" className="w-full p-2 border rounded" />
+                    <ErrorMessage name="province" component="div" className="text-red-500 text-sm" />
                   </div>
                 </div>
-  
-                {/* Sécurité */}
-                <div className="mb-4">
-                  <h2 className="text-lg font-bold mb-2">
-                    <FaLock className="mr-2 inline" />
-                    Sécurité
-                  </h2>
-                  <div className="mb-2">
-                    <label
-                      className="block text-gray-700 font-bold mb-2"
-                      htmlFor="motDePasse"
-                    >
-                      Mot de passe
-                    </label>
-                    <div className="flex row w-full">
-                        <input
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            id="motDePasse"
-                            type={showPassword ? "text" : "password"}
-                            name="motDePasse"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.motDePasse}
-                        />
-                        <button
-                            type="button"
-                            className="flex items-center text-gray-500 ml-1"
-                            onClick={toggleShowPassword}
-                        >
-                            {!showPassword ? <FaEyeSlash /> : <FaEye />}
-                        </button>
-                    </div>
-                    
-                    
-                  </div>
-                  <div className="mb-2">
-                    <label
-                      className="block text-gray-700 font-bold mb-2"
-                      htmlFor="confirmMotDePasse"
-                    >
-                      Confirmer le mot de passe
-                    </label>
-                    <div className="flex row w-full">
-                        <input
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            id="confirmMotDePasse"
-                            type={showConfirmPassword ? "text" : "password"}
-                            name="confirmMotDePasse"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            value={values.confirmMotDePasse}
-                        />
-                        <button
-                            type="button"
-                            className="flex items-center text-gray-500 ml-1"
-                            onClick={toggleShowConfirmPassword}
-                        >
-                            {!showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                        </button>
-                    </div>
-                    
-                  </div>
+                <div className="mb-2">
+                  <label htmlFor="rue" className="block mb-1 flex items-center">
+                    <FaMapMarkerAlt className="mr-2" /> Rue
+                  </label>
+                  <Field name="rue" type="text" className="w-full p-2 border rounded" />
+                  <ErrorMessage name="rue" component="div" className="text-red-500 text-sm" />
                 </div>
-  
-                <div className="flex row w-full">
-                  <button
-                    className="bg-gray-400 ml-4 hover:bg-gray-500 text-black font-medium mr-2 py-2 px-4 rounded-md mt-12 w-1/2 flex items-center justify-center"
-                    type="button"
-                    onClick={cancelUpdate}
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    className="bg-blue-500 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md mt-12 w-1/2 flex items-center justify-center"
-                    type="button"
-                    onClick={handleConfirmUpdate}
-                  >
-                    Mettre à jour l'organisation
-                  </button>
-                </div>
-                {showConfirmationModal && (
-                  <div className="text-white fixed inset-0 flex items-center justify-center z-50">
-                    <div className="bg-gray-700 rounded-lg shadow-lg p-6 relative">
+              </div>
+
+              <div>
+                <h2 className="text-xl font-semibold mb-2">
+                  <FaLock className="mr-2 inline" />
+                  Sécurité
+                </h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="nouveauMotDePasse" className="block mb-1">Nouveau mot de passe (optionnel)</label>
+                    <div className="relative">
+                      <Field
+                        name="nouveauMotDePasse"
+                        type={showPassword ? "text" : "password"}
+                        className="w-full p-2 border rounded pr-10"
+                      />
                       <button
                         type="button"
-                        className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 focus:outline-none"
-                        onClick={cancelUpdate}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowPassword(!showPassword)}
                       >
-                        <FaTimes color="white" />
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
                       </button>
-                      <div className="mb-4 text-lg font-semibold">Confirmation</div>
-                      <div className="mb-4">
-                        Êtes-vous sûr de vouloir mettre à jour l'organisation{" "}
-                        {organisation.nomEntreprise} ?
-                      </div>
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          type="button"
-                          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-100"
-                          onClick={cancelUpdate}
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={isSubmitting}
-                          className="bg-[#fc4545] text-white px-4 py-2 rounded-md flex items-center hover:bg-blue-600"
-                        >
-                          <FaEdit className="mr-1" /> Mettre à jour
-                        </button>
-                      </div>
+                    </div>
+                    <ErrorMessage name="nouveauMotDePasse" component="div" className="text-red-500 text-sm" />
+                  </div>
+                  <div>
+                    <label htmlFor="confirmNouveauMotDePasse" className="block mb-1">Confirmer le nouveau mot de passe</label>
+                    <div className="relative">
+                      <Field
+                        name="confirmNouveauMotDePasse"
+                        type={showConfirmPassword ? "text" : "password"}
+                        className="w-full p-2 border rounded pr-10"
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                    <ErrorMessage name="confirmNouveauMotDePasse" component="div" className="text-red-500 text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center space-x-4">
+                <button type="button" onClick={handleCancel} className="bg-gray-300 text-gray-800 px-6 py-2 rounded">
+                  Annuler
+                </button>
+                <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded">
+                  Mettre à jour l'organisation
+                </button>
+              </div>
+
+              {showUpdateConfirmation && (
+                <div className="text-white fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                  <div className="bg-gray-700 rounded-lg shadow-lg p-6 relative">
+                    <button
+                      type="button"
+                      className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 focus:outline-none"
+                      onClick={() => setShowUpdateConfirmation(false)}
+                    >
+                      <FaTimes color="white" />
+                    </button>
+                    <div className="mb-4 text-lg font-semibold">Confirmation</div>
+                    <div className="mb-4">
+                      Êtes-vous sûr de vouloir mettre à jour ce compte ?
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        type="button"
+                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-100"
+                        onClick={() => setShowUpdateConfirmation(false)}
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="button"
+                        className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                        onClick={() => confirmUpdate(values)}
+                      >
+                        Confirmer
+                      </button>
                     </div>
                   </div>
-                )}
-              </form>
-            )}
-          </Formik>
-        </div>
+                </div>
+              )}
+            </form>
+          )}
+        </Formik>
       </div>
-    );
-  };
-  
-  export default UpdateOrganisationForm;
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className={`bg-white p-6 rounded-lg shadow-lg ${popupType === 'success' ? 'border-green-500' : 'border-red-500'} border-4`}>
+            <h2 className={`text-2xl font-bold mb-4 ${popupType === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+              {popupType === 'success' ? 'Succès' : 'Erreur'}
+            </h2>
+            <p className="mb-4">{popupMessage}</p>
+            <button
+              onClick={() => {
+                setShowPopup(false);
+                if (popupType === 'success') {
+                  handleCancel();
+                }
+              }}
+              className={`px-4 py-2 rounded ${popupType === 'success' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'} text-white`}
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default UpdateOrganisationForm;

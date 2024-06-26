@@ -5,18 +5,41 @@ import OrganisationsTable from '@/components/Tables/OrganisationTable';
 import { auth} from '../Firebase/firebaseConfig'
 import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
-
-
-const organisations = [
-  { id: 1, nom: 'Organisation 1', proprietaireNom: 'John', proprietairePrenom: 'Doe', pays: 'DZ', province: 'Alger', rue: 'Bab Ezzouar', email: 'exemple@gmail.com', telephone: '+21300000000', password:'123456' },
-  { id: 2, nom: 'Organisation 2', proprietaireNom: 'John', proprietairePrenom: 'Doe', pays: 'DZ', province: 'Alger', rue: 'Bab Ezzouar', email: 'exemple@gmail.com', telephone: '+21300000000', password:'123456' },
-];
-
+import axios from "axios";
 
 const Organisations = () => {
-  const [organisationsData, setOrganisationsData] = useState(organisations);
+  const [organisationsData, setOrganisationsData] = useState([]);
   const [userSession, setUserSession] = useState(null);
+  const [reload, setReload] = useState(false)
   const router = useRouter();
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:1937",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const recharge = () => {
+    setReload(!reload)
+  }
+
+  const getAllOrganizations = async () => {
+    try{
+      const response = await axiosInstance.get("/organization/AllOrganizations")
+      console.log("organisations = ", response.data)
+      setOrganisationsData(response.data)
+    } catch(error) {
+      console.error("Erreur lors de la récuperation des organisations :", error);
+    }
+  }
+
+  useEffect(() => {
+    getAllOrganizations();
+  }, []);
+
+  useEffect(() => {
+    getAllOrganizations();    
+  }, [reload]);
+
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -31,10 +54,7 @@ const Organisations = () => {
     return unsubscribe;
   }, [router]);
 
-  const handleDeleteOrganisation = (organisation) => {
-    const updatedOrganisations = organisationsData.filter((c) => c.id !== organisation.id);
-    setOrganisationsData(updatedOrganisations);
-  };
+  
 
   return  userSession === null ? 
   (
@@ -43,7 +63,7 @@ const Organisations = () => {
     <div className="min-h-screen bg-cover bg-center">
       <Navigation activeTab="tab2"/>
       <div className="mx-auto h-screen bg-white rounded-b-lg p-4">
-        <OrganisationsTable organisations={organisationsData} onDeleteOrganisation={handleDeleteOrganisation}/>
+        <OrganisationsTable organisations={organisationsData} recharge={recharge}/>
       </div>
     </div>
   );

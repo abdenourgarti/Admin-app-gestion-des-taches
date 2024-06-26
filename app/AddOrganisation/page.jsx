@@ -23,6 +23,10 @@ const AddOrganisation = () => {
 
     return unsubscribe;
   }, [router]);
+
+  const handleCancel = () => {
+    router.push('/Organisations');
+  }
   
 
   return  userSession === null ? 
@@ -31,7 +35,7 @@ const AddOrganisation = () => {
   ) : (
     <div className='flex flex-col min-h-screen'>
       <Navigation activeTab="" />
-      <AddOrganisationForm />
+      <AddOrganisationForm handleCancel={handleCancel}/>
     </div>
   );
 };

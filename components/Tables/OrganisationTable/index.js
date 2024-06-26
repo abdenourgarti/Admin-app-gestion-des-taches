@@ -3,7 +3,7 @@ import Link from 'next/link';
 import React, { useState } from 'react';
 import { FaPlus, FaEye, FaPen, FaTrash, FaTimes } from 'react-icons/fa';
 
-const OrganisationsTable = ({ organisations, onDeleteOrganisation }) => {
+const OrganisationsTable = ({ organisations, recharge }) => {
   const [organisationToDelete, setOrganisationToDelete] = useState(null);
   const [organisationToView, setOrganisationToView] = useState(null);
 
@@ -34,16 +34,18 @@ const OrganisationsTable = ({ organisations, onDeleteOrganisation }) => {
       <table className="w-full table-auto">
         <thead>
           <tr>
-            <th className="bg-gray-200 border border-gray-400 px-4 py-2">ID</th>
             <th className="bg-gray-200 border border-gray-400 px-4 py-2">Nom</th>
+            <th className="bg-gray-200 border border-gray-400 px-4 py-2">Propriétaire </th>
+            <th className="bg-gray-200 border border-gray-400 px-4 py-2">Email </th>
             <th className="bg-gray-200 border border-gray-400 px-4 py-2 w-64">Actions</th>
           </tr>
         </thead>
         <tbody>
           {organisations.map((organisation) => (
             <tr key={organisation.id}>
-              <td className="border border-gray-400 px-4 py-2">{organisation.id}</td>
-              <td className="border border-gray-400 px-4 py-2">{organisation.nom}</td>
+              <td className="border border-gray-400 px-4 py-2">{organisation.Name}</td>
+              <td className="border border-gray-400 px-4 py-2">{organisation.Boss.nom} {organisation.Boss.prenom}</td>
+              <td className="border border-gray-400 px-4 py-2">{organisation.Boss.email}</td>
               <td className="border border-gray-400 px-4 py-2">
                 <div className="flex flex-col md:flex-row justify-center items-center md:items-start">
                   <button                    

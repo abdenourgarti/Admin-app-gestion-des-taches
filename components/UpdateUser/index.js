@@ -122,7 +122,7 @@ const UpdateUserForm = ({ compte, handleCancel }) => {
   ];
 
   const roleOptions = [
-    { value: "employee", label: "Employé" },
+    { value: "employee", label: "Membre d'équipe" },
     { value: "prjctBoss", label: "Chef de projet" },
   ];
 
@@ -208,18 +208,25 @@ const UpdateUserForm = ({ compte, handleCancel }) => {
   const updateUser = async (values) => {
     try {
       let filteredRoles;
+  
       if (roles.length > 0) {
-        filteredRoles = roles.map(role => ({
-          role: role.role,
-          organization: role.organization._id
-        }));
+        if (roles.length > 1 && roles[0].role === "individual") {
+          filteredRoles = roles.slice(1).map(role => ({
+            role: role.role,
+            organization: role.organization._id
+          }));
+        } else {
+          filteredRoles = roles.map(role => ({
+            role: role.role,
+            organization: role.organization._id
+          }));
+        }
       } else {
         filteredRoles = [{
           role: "individual",
           organization: null
         }];
       }
-      
   
       const filteredTeams = teamsArray.map(team => team._id);
   
@@ -262,6 +269,20 @@ const UpdateUserForm = ({ compte, handleCancel }) => {
     updateUser(values);
     setShowUpdateConfirmation(false);
   };
+
+  const getRole = (role) => {
+    switch (role) {
+      case "teamBoss":
+        return "Chef d'équipe"
+        break;
+      case "prjctBoss":
+        return "Chef de projet"
+        break;
+      case "employee":
+        return "Membre d'équipe"
+        break;
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-[url('/BG.jpeg')]">
@@ -358,34 +379,42 @@ const UpdateUserForm = ({ compte, handleCancel }) => {
               <div>
                 <h2 className="text-xl font-semibold mb-2">Rôles et Organisations</h2>
                 <FieldArray name="roles">
-                  {() => (
-                    <div>
-                      {roles.map((role, index) => {
-                        const correspondingTeam = teamsArray.find(team => team.Organization === role.organization?._id);
-                        return (
-                          <div key={index} className="mb-4 p-4 border rounded bg-gray-50 flex justify-between items-center">
-                            <div className="flex items-center">
-                              <FaBuilding className="mr-2 text-gray-600" />
+                {(() => (
+                  <>
+                    {(roles.length === 1 && roles[0].role === "individual") || roles.length === 0 ? (
+                      <div className="w-full my-4 py-2 text-gray-00 flex justify-center items-center border-gray-600 border-2 border-dashed">
+                        No Organizations
+                      </div>
+                    ) : (
+                      <div>
+                        {roles.slice((roles.length > 1 && roles[0].role === "individual") ? 1 : 0).map((role, index) => {
+                          const correspondingTeam = teamsArray.find(team => team.Organization === role.organization?._id);
+                          return (
+                            <div key={index} className="mb-4 p-4 border rounded bg-gray-50 flex justify-between items-center">
+                              <div className="flex items-center">
+                                <FaBuilding className="mr-2 text-gray-600" />
+                                <div>
+                                  <h3 className="font-semibold">{role.organization?.Name}</h3>
+                                  <p>Rôle: {getRole(role.role)}</p>
+                                  {correspondingTeam && <p>Équipe: {correspondingTeam.Name}</p>}
+                                </div>
+                              </div>
                               <div>
-                                <h3 className="font-semibold">{role.organization?.Name}</h3>
-                                <p>Rôle: {role.role}</p>
-                                {correspondingTeam && <p>Équipe: {correspondingTeam.Name}</p>}
+                                <button 
+                                  type="button" 
+                                  onClick={() => handleDeleteRole(index, values, setFieldValue)} 
+                                  className="text-red-500"
+                                >
+                                  <FaTrash />
+                                </button>
                               </div>
                             </div>
-                            <div>
-                              <button 
-                                type="button" 
-                                onClick={() => handleDeleteRole(index, values, setFieldValue)} 
-                                className="text-red-500"
-                              >
-                                <FaTrash />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                ))()}
                 </FieldArray>
               </div>
               <div>
