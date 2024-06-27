@@ -140,14 +140,14 @@ const UpdateOrganisationForm = ({ organisation, handleCancel }) => {
               <div className="flex justify-center mb-6">
                 <h1 className="flex text-2xl">
                   <FaEdit className="mr-4 text-2xl" />
-                  {`Modifier l'organisation`}
+                  {`Modifier l&aposorganisation`}
                 </h1>
               </div>
 
               <div>
                 <h2 className="text-xl font-semibold mb-2">
                   <FaUserTie className="mr-2 inline" />
-                  {`Propriétaire de l'entreprise`}
+                  {`Propriétaire de l&aposentreprise`}
                 </h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
