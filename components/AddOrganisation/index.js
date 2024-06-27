@@ -196,7 +196,7 @@ const AddOrganisationForm = ({ handleCancel }) => {
               <div>
                 <h2 className="text-xl font-semibold mb-2">
                   <FaUserTie className="mr-2 inline" />
-                  Propriétaire de l'entreprise
+                  Propriétaire de l&aposentreprise
                 </h2>
                 <div className="grid grid-cols-2 gap-4">
                   
@@ -216,10 +216,10 @@ const AddOrganisationForm = ({ handleCancel }) => {
               <div>
                 <h2 className="text-xl font-semibold mb-2">
                   <FaBriefcase className="mr-2 inline" />
-                  Informations sur l'entreprise
+                  Informations sur l&aposentreprise
                 </h2>
                 <div className="mb-2">
-                  <label htmlFor="nomEntreprise" className="block mb-1">Nom de l'entreprise</label>
+                  <label htmlFor="nomEntreprise" className="block mb-1">Nom de l&aposentreprise</label>
                   <Field name="nomEntreprise" type="text" className="w-full p-2 border rounded" />
                   <ErrorMessage name="nomEntreprise" component="div" className="text-red-500 text-sm" />
                 </div>
@@ -325,7 +325,7 @@ const AddOrganisationForm = ({ handleCancel }) => {
                   Annuler
                 </button>
                 <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded">
-                  Ajouter l'entreprise
+                  Ajouter l&aposentreprise
                 </button>
               </div>
             </form>

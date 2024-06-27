@@ -143,7 +143,7 @@ const OrganisationsTable = ({ organisations, recharge }) => {
             </button>
             <div className="mb-4 text-lg font-semibold">Confirmation</div>
             <div className="mb-4">
-              Êtes-vous sûr de vouloir supprimer l'organisation {organisationToDelete.nom} ?
+              Êtes-vous sûr de vouloir supprimer l&aposorganisation {organisationToDelete.nom} ?
             </div>
             <div className="flex justify-end space-x-2">
               <button
