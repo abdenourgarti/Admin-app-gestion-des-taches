@@ -118,7 +118,7 @@
 //                 onSubmit={handleSubmit}
 //               >
 //                 <div className="flex justify-center mb-6">
-//                   <h1 className="text-2xl font-bold">Modifier l'email</h1>
+//                   <h1 className="text-2xl font-bold">{`Modifier l'email`}l</h1>
 //                 </div>
 
 //                 <div className="mb-4">
