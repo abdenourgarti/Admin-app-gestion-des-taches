@@ -6,10 +6,18 @@ import Navigation from "@/components/Navbar";
 import { auth} from '../../Firebase/firebaseConfig'
 import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader';
+import axios from "axios";
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 
 const AdminEditPasswordForm = () => {
   const [userSession, setUserSession] = useState(null);
   const router = useRouter();
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:1937",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -57,12 +65,36 @@ const AdminEditPasswordForm = () => {
               }
               return errors;
             }}
-            onSubmit={(values, { setSubmitting }) => {
-              setTimeout(() => {
-                alert(JSON.stringify(values, null, 2));
+            onSubmit={async (values, { setSubmitting, setFieldError }) => {
+              try {
+                // Réauthentifier l'utilisateur
+                const credential = EmailAuthProvider.credential(
+                  userSession.email,
+                  values.currentPassword
+                );
+                await reauthenticateWithCredential(userSession, credential);
+            
+                // Mettre à jour le mot de passe dans Firebase
+                await updatePassword(userSession, values.newPassword);
+            
+                // Mettre à jour l'email en attente dans votre base de données
+                await axiosInstance.patch('/user/update-compte', {
+                  currentEmail: userSession.email,
+                  newPassword: values.newPassword,
+                });
+            
+                alert("Mot de passe mis à jour avec succès");
+                router.push('/ProfilAdmin');
+              } catch (error) {
+                console.error("Erreur lors de la mise à jour du mot de passe:", error);
+                if (error.code === 'auth/wrong-password') {
+                  setFieldError('currentPassword', 'Le mot de passe actuel est incorrect');
+                } else {
+                  alert("Une erreur s'est produite lors de la mise à jour du mot de passe");
+                }
+              } finally {
                 setSubmitting(false);
-                window.location.replace('/ProfilAdmin');
-              }, 400);
+              }
             }}
           >
             {({

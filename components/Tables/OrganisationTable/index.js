@@ -2,10 +2,60 @@ import ViewOrganisationModal from '@/components/ViewOrganisationModal';
 import Link from 'next/link';
 import React, { useState } from 'react';
 import { FaPlus, FaEye, FaPen, FaTrash, FaTimes } from 'react-icons/fa';
+import axios from "axios";
 
 const OrganisationsTable = ({ organisations, recharge }) => {
   const [organisationToDelete, setOrganisationToDelete] = useState(null);
   const [organisationToView, setOrganisationToView] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupType, setPopupType] = useState('');
+  const [popupMessage, setPopupMessage] = useState('');
+
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:1937",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const onDeleteOrganisation = async (organisation) => {
+    try {
+      const response = await axiosInstance.delete(`/user/users/${organisation.Boss._id}`);
+      
+      if (response.status === 200) {
+        console.log("Utilisateur supprimé avec succès de la base de données");
+        setPopupType('success');
+        setPopupMessage('Utilisateur supprimé avec succès.');
+        setShowPopup(true);
+        recharge();
+      } else {
+        throw new Error("Erreur lors de la suppression de l'utilisateur de la base de données");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'utilisateur:", error);
+      setPopupType('error');
+      setPopupMessage(`Erreur lors de la suppression : ${error.message}`);
+      setShowPopup(true);
+    }
+    try {
+      const response = await axiosInstance.delete(`/organization/organizations/${organisation._id}`);
+      
+      if (response.status === 200) {
+        console.log("organisation supprimé avec succès de la base de données");
+        setPopupType('success');
+        setPopupMessage('organisation supprimé avec succès.');
+        setShowPopup(true);
+        recharge();
+      } else {
+        throw new Error("Erreur lors de la suppression de l'organisation de la base de données");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'organisation:", error);
+      setPopupType('error');
+      setPopupMessage(`Erreur lors de la suppression : ${error.message}`);
+      setShowPopup(true);
+    }
+  }
 
   const handleDeleteOrganisation = (organisation) => {
     setOrganisationToDelete(organisation);
@@ -111,6 +161,27 @@ const OrganisationsTable = ({ organisations, recharge }) => {
                 <FaTrash className="mr-1" /> Supprimer
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className={`bg-white p-6 rounded-lg shadow-lg ${popupType === 'success' ? 'border-green-500' : 'border-red-500'} border-4`}>
+            <h2 className={`text-2xl font-bold mb-4 ${popupType === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+              {popupType === 'success' ? 'Succès' : 'Erreur'}
+            </h2>
+            <p className="mb-4">{popupMessage}</p>
+            <button
+              onClick={() => {
+                setShowPopup(false);
+                if (popupType === 'success') {
+                  // Vous pouvez appeler handleCancel ici si nécessaire
+                }
+              }}
+              className={`px-4 py-2 rounded ${popupType === 'success' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'} text-white`}
+            >
+              Fermer
+            </button>
           </div>
         </div>
       )}

@@ -1,13 +1,28 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Formik } from "formik";
 import { FaEnvelope, FaLock } from "react-icons/fa";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from '../Firebase/firebaseConfig'
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 const AdminLoginForm = () => {
+  const [erreurs, setErreurs] = useState("");
   const router = useRouter();
+  const axiosInstance = axios.create({
+    baseURL: "http://localhost:1937",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const CheckRole = async (email) => {
+    const response = await axiosInstance.get("/user/me", {
+      params: { email: email },
+    });
+    return response.data;
+  }
   return (
     <div className="flex items-center justify-center h-screen bg-[url('/BG.jpeg')]">
       <div className="w-full max-w-md">
@@ -30,18 +45,23 @@ const AdminLoginForm = () => {
             }
             return errors;
           }}
-          onSubmit={(values, { setSubmitting }) => {
-            setTimeout(() => {
-              signInWithEmailAndPassword(auth, values.email, values.motDePasse)
-                .then(user => {
-                  router.push('/Comptes');
-                  setSubmitting(false);
-                })
-                .catch(error => {
-                  console.log(error);
-                  setSubmitting(false);
-                })
-            }, 400);
+          onSubmit={async (values, { setSubmitting}) => {
+            try{
+              const Admin = await CheckRole(values.email);
+              if (Admin.roles[0].role !== "admin") {
+                setErreurs("Vous n'avez pas les droits d'accès administrateur");
+                setSubmitting(false);
+                return;
+              }
+               // Si l'utilisateur est admin, procédez à la connexion Firebase
+              const userCredential = await signInWithEmailAndPassword(auth, values.email, values.motDePasse);
+              router.push('/Comptes');
+            } catch (error) {
+              console.error(error);
+              setErreurs("Email ou mot de passe invalide");
+            } finally {
+              setSubmitting(false);
+            }
           }}
         >
           {({
@@ -124,6 +144,11 @@ const AdminLoginForm = () => {
                   Se connecter
                 </button>
               </div>
+              {erreurs && (
+                <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  <p className="text-center">{erreurs}</p>
+                </div>
+              )}
             </form>
           )}
         </Formik>
