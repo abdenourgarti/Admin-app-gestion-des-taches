@@ -140,14 +140,14 @@ const UpdateOrganisationForm = ({ organisation, handleCancel }) => {
               <div className="flex justify-center mb-6">
                 <h1 className="flex text-2xl">
                   <FaEdit className="mr-4 text-2xl" />
-                  Modifier l'organisation
+                  {`Modifier l'organisation`}
                 </h1>
               </div>
 
               <div>
                 <h2 className="text-xl font-semibold mb-2">
                   <FaUserTie className="mr-2 inline" />
-                  Propriétaire de l'entreprise
+                  {`Propriétaire de l'entreprise`}
                 </h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -166,10 +166,10 @@ const UpdateOrganisationForm = ({ organisation, handleCancel }) => {
               <div>
                 <h2 className="text-xl font-semibold mb-2">
                   <FaBriefcase className="mr-2 inline" />
-                  Informations sur l'entreprise
+                  {`Informations sur l'entreprise`}
                 </h2>
                 <div className="mb-2">
-                  <label htmlFor="nomEntreprise" className="block mb-1">Nom de l'entreprise</label>
+                  <label htmlFor="nomEntreprise" className="block mb-1">{`Nom de l'entreprise`}</label>
                   <Field name="nomEntreprise" type="text" className="w-full p-2 border rounded" />
                   <ErrorMessage name="nomEntreprise" component="div" className="text-red-500 text-sm" />
                 </div>
@@ -275,7 +275,7 @@ const UpdateOrganisationForm = ({ organisation, handleCancel }) => {
                   Annuler
                 </button>
                 <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded">
-                  Mettre à jour l'organisation
+                  {`Mettre à jour l'organisation`}
                 </button>
               </div>
 

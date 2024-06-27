@@ -22,7 +22,7 @@ const ViewOrganisationModal = ({ organisation, onClose }) => {
 
       <div className="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-xl sm:w-full relative">
         <div className="bg-[#314155] h-10 flex items-center justify-between px-4">
-          <h3 className="text-lg font-medium text-white">Détails de l'organisation</h3>
+          <h3 className="text-lg font-medium text-white">{`Détails de l'organisation`}</h3>
           <button type="button" className="text-white hover:text-gray-300" onClick={onClose}>
             <FaTimes />
           </button>
