@@ -29,7 +29,7 @@ export default function NotFound() {
             La page que vous recherchez est introuvable.
           </p>
           <p className="mb-4">
-            Veuillez vérifier l&aposURL ou retourner à la{" "}
+            Veuillez vérifier l'URL ou retourner à la{" "}
             <button
               onClick={handleSignOut}
               className="underline hover:no-underline text-blue-600">

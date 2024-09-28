@@ -27,13 +27,13 @@ const ViewCompteModal = ({ compte, onClose }) => {
   const getRole = (role) => {
     switch (role) {
       case "teamBoss":
-        return "Chef de l&aposéquipe"
+        return "Chef de l'équipe"
         break;
       case "prjctBoss":
         return "Chef de projet"
         break;
       case "employee":
-        return "Membre dans l&aposéquipe"
+        return "Membre dans l'équipe"
         break;
     }
   }

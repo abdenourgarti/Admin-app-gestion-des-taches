@@ -94,8 +94,8 @@ const OrganisationsTable = ({ organisations, recharge }) => {
           {organisations.map((organisation) => (
             <tr key={organisation.id}>
               <td className="border border-gray-400 px-4 py-2">{organisation.Name}</td>
-              <td className="border border-gray-400 px-4 py-2">{organisation.Boss.nom} {organisation.Boss.prenom}</td>
-              <td className="border border-gray-400 px-4 py-2">{organisation.Boss.email}</td>
+              <td className="border border-gray-400 px-4 py-2">{organisation.Boss?.nom} {organisation.Boss?.prenom}</td>
+              <td className="border border-gray-400 px-4 py-2">{organisation.Boss?.email}</td>
               <td className="border border-gray-400 px-4 py-2">
                 <div className="flex flex-col md:flex-row justify-center items-center md:items-start">
                   <button                    
@@ -143,7 +143,7 @@ const OrganisationsTable = ({ organisations, recharge }) => {
             </button>
             <div className="mb-4 text-lg font-semibold">Confirmation</div>
             <div className="mb-4">
-              Êtes-vous sûr de vouloir supprimer l&aposorganisation {organisationToDelete.nom} ?
+              Êtes-vous sûr de vouloir supprimer l'organisation {organisationToDelete.nom} ?
             </div>
             <div className="flex justify-end space-x-2">
               <button

@@ -196,7 +196,7 @@ const AddOrganisationForm = ({ handleCancel }) => {
               <div>
                 <h2 className="text-xl font-semibold mb-2">
                   <FaUserTie className="mr-2 inline" />
-                  Propriétaire de l&aposentreprise
+                  Propriétaire de l'entreprise
                 </h2>
                 <div className="grid grid-cols-2 gap-4">
                   
@@ -216,22 +216,22 @@ const AddOrganisationForm = ({ handleCancel }) => {
               <div>
                 <h2 className="text-xl font-semibold mb-2">
                   <FaBriefcase className="mr-2 inline" />
-                  Informations sur l&aposentreprise
+                  Informations sur l'entreprise
                 </h2>
                 <div className="mb-2">
-                  <label htmlFor="nomEntreprise" className="block mb-1">Nom de l&aposentreprise</label>
+                  <label htmlFor="nomEntreprise" className="block mb-1">Nom de l'entreprise</label>
                   <Field name="nomEntreprise" type="text" className="w-full p-2 border rounded" />
                   <ErrorMessage name="nomEntreprise" component="div" className="text-red-500 text-sm" />
                 </div>
                 <div className="mb-2">
-                  <label htmlFor="email" className="block mb-1 flex items-center">
+                  <label htmlFor="email" className="block mb-1 items-center">
                     <FaEnvelope className="mr-2" /> Email
                   </label>
                   <Field name="email" type="email" className="w-full p-2 border rounded" />
                   <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
                 </div>
                 <div className="mb-2">
-                  <label htmlFor="telephone" className="block mb-1 flex items-center">
+                  <label htmlFor="telephone" className="block mb-1 items-center">
                     <FaPhoneAlt className="mr-2" /> Numéro de téléphone
                   </label>
                   <PhoneInput
@@ -267,7 +267,7 @@ const AddOrganisationForm = ({ handleCancel }) => {
                   </div>
                 </div>
                 <div className="mb-2">
-                  <label htmlFor="rue" className="block mb-1 flex items-center">
+                  <label htmlFor="rue" className="block mb-1 items-center">
                     <FaMapMarkerAlt className="mr-2" /> Rue
                   </label>
                   <Field name="rue" type="text" className="w-full p-2 border rounded" />
@@ -325,7 +325,7 @@ const AddOrganisationForm = ({ handleCancel }) => {
                   Annuler
                 </button>
                 <button type="submit" className="bg-blue-500 text-white px-6 py-2 rounded">
-                  Ajouter l&aposentreprise
+                  Ajouter l'entreprise
                 </button>
               </div>
             </form>
